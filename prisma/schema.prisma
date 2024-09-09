@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int              @id @default(autoincrement())
+  username  String
+  password  String
+  tweet     Tweet[]
+  follows   FollowsOnUsers[] @relation("UserFollows")
+  followers FollowsOnUsers[] @relation("UserFollowers")
+  createdAt DateTime         @default(now())
+  Favorite  Favorite[]
+}
+
+model FollowsOnUsers {
+  follower    User @relation("UserFollowers", fields: [followerId], references: [id])
+  followerId  Int
+  following   User @relation("UserFollows", fields: [followingId], references: [id])
+  followingId Int
+
+  @@id([followerId, followingId])
+}
+
+model Tweet {
+  id        Int                 @id @default(autoincrement())
+  content   String
+  isRocked  Boolean
+  author    User?               @relation(fields: [authorId], references: [id])
+  authorId  Int?
+  favorites FavoritesOnTweets[]
+  createdAt DateTime            @default(now())
+}
+
+model FavoritesOnTweets {
+  id         Int      @id
+  tweet      Tweet    @relation(fields: [tweetId], references: [id])
+  tweetId    Int
+  favorite   Favorite @relation(fields: [favoriteId], references: [id])
+  favoriteId Int
+  assignedAt DateTime @default(now())
+}
+
+model Favorite {
+  id       Int                 @id @default(autoincrement())
+  posts    FavoritesOnTweets[]
+  author   User?               @relation(fields: [authorId], references: [id])
+  authorId Int?
+}
